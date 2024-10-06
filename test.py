@@ -1,3 +1,2 @@
-def printSalary(salary):
-    print("salary")
-printSalary(8000)
+def thingsOf():
+    return thingsOf(2, 5)
