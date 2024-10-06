@@ -1,4 +1,4 @@
-# Set the path to your Git repository (use double quotes and escape backslashes)
+# Set the path to your Git repository
 $pathToWatch = "E:\\urik"
 
 # Verify the path exists before setting up the watcher
@@ -9,7 +9,7 @@ if (-Not (Test-Path -Path $pathToWatch)) {
 
 Write-Host "Monitoring directory: $pathToWatch"
 
-# Create a FileSystemWatcher object using constructor with path and filter
+# Create a FileSystemWatcher object
 try {
     $watcher = [System.IO.FileSystemWatcher]::new($pathToWatch, "*.*")
     Write-Host "FileSystemWatcher object created successfully with path: $($watcher.Path)"
@@ -21,15 +21,20 @@ try {
 # Set IncludeSubdirectories to true
 $watcher.IncludeSubdirectories = $true
 
-# Define the event handler action
+# Define the event handler action with enhanced error handling and output capture
 $eventAction = {
     Write-Host "Change detected. Committing and pushing to GitHub..."
     cd $pathToWatch
 
-    # Git commands to add, commit, and push changes
-    git add --all
-    git commit -m "Auto commit - added new changes"
-    git push origin main  # Change "main" to your branch name if different
+    # Run Git commands and capture output and errors
+    $gitAddOutput = git add --all 2>&1
+    $gitCommitOutput = git commit -m "Auto commit - added new changes" 2>&1
+    $gitPushOutput = git push origin main 2>&1
+
+    # Display output or errors for each Git command
+    Write-Host "`n[Git Add Output]`n$gitAddOutput"
+    Write-Host "`n[Git Commit Output]`n$gitCommitOutput"
+    Write-Host "`n[Git Push Output]`n$gitPushOutput"
 
     Write-Host "Changes pushed to GitHub successfully."
 }
@@ -49,7 +54,7 @@ try {
 # Enable event handling after attaching the events
 try {
     $watcher.EnableRaisingEvents = $true
-    Write-Host "FileSystemWatcher is now monitoring directory: $watcher.Path"
+    Write-Host "FileSystemWatcher is now monitoring directory: $($watcher.Path)"
 } catch {
     Write-Host "Failed to enable raising events. Error: $_"
     exit
