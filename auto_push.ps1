@@ -1,4 +1,4 @@
-# Set the path to your Git repository
+# Set the path to your Git repository (use double quotes and escape backslashes)
 $pathToWatch = "E:\\urik"
 
 # Verify the path exists before setting up the watcher
@@ -9,40 +9,20 @@ if (-Not (Test-Path -Path $pathToWatch)) {
 
 Write-Host "Monitoring directory: $pathToWatch"
 
-# Create a FileSystemWatcher object using the constructor with path and filter
+# Create a FileSystemWatcher object using constructor with path and filter
 try {
     $watcher = [System.IO.FileSystemWatcher]::new($pathToWatch, "*.*")
-    Write-Host "FileSystemWatcher object created successfully with path: $watcher.Path"
+    Write-Host "FileSystemWatcher object created successfully with path: $($watcher.Path)"
 } catch {
     Write-Host "Failed to create FileSystemWatcher object. Error: $_"
     exit
 }
 
-# Print all properties of the watcher object to debug
-$watcher | Format-List -Property *
+# Set IncludeSubdirectories to true
+$watcher.IncludeSubdirectories = $true
 
-# Verify the watcher type and check for null values
-if ($watcher -eq $null) {
-    Write-Host "The watcher object is null. Exiting script."
-    exit
-}
-
-if ($watcher.GetType().FullName -ne "System.IO.FileSystemWatcher") {
-    Write-Host "The watcher is not a valid FileSystemWatcher object. Object type: " + $watcher.GetType().FullName
-    exit
-}
-
-# Print a debug message to confirm properties
-Write-Host "Path: $($watcher.Path), Filter: $($watcher.Filter)"
-
-# Set IncludeSubdirectories to true if it's not already set
-if (-not $watcher.IncludeSubdirectories) {
-    $watcher.IncludeSubdirectories = $true
-    Write-Host "IncludeSubdirectories set to: $($watcher.IncludeSubdirectories)"
-}
-
-# Define an action to take on file change
-$action = {
+# Define the event handler action
+$eventAction = {
     Write-Host "Change detected. Committing and pushing to GitHub..."
     cd $pathToWatch
 
@@ -54,19 +34,13 @@ $action = {
     Write-Host "Changes pushed to GitHub successfully."
 }
 
-# Attach event handlers only if the watcher is correctly set up
+# Attach event handlers using Register-ObjectEvent
 try {
-    if ($watcher -and $watcher.Path -and (Test-Path $watcher.Path)) {
-        # Attach event handlers
-        $watcher.Changed.Add($action)
-        $watcher.Created.Add($action)
-        $watcher.Deleted.Add($action)
-        $watcher.Renamed.Add($action)
-        Write-Host "Event handlers attached successfully."
-    } else {
-        Write-Host "Watcher path or object is not valid. Cannot attach event handlers."
-        exit
-    }
+    Register-ObjectEvent -InputObject $watcher -EventName Changed -Action $eventAction
+    Register-ObjectEvent -InputObject $watcher -EventName Created -Action $eventAction
+    Register-ObjectEvent -InputObject $watcher -EventName Deleted -Action $eventAction
+    Register-ObjectEvent -InputObject $watcher -EventName Renamed -Action $eventAction
+    Write-Host "Event handlers attached successfully."
 } catch {
     Write-Host "Failed to attach event handlers. Error: $_"
     exit
