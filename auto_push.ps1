@@ -29,7 +29,7 @@ $eventAction = {
     # Run Git commands and capture output and errors
     $gitAddOutput = git add --all 2>&1
     $gitCommitOutput = git commit -m "Auto commit - added new changes" 2>&1
-    $gitPushOutput = git push origin main 2>&1
+    $gitPushOutput = git push --all 2>&1
 
     # Display output or errors for each Git command
     Write-Host "`n[Git Add Output]`n$gitAddOutput"
